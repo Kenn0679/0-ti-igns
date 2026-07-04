@@ -95,6 +95,8 @@ out
 .nuxt
 dist
 
+src/dist_markdown/
+
 # Gatsby files
 .cache/
 # Comment in the public line in if your project uses Gatsby and not Next.js
