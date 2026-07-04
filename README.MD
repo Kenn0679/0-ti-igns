@@ -94,4 +94,4 @@ Expected response shape (enforced by `system_prompt.md`):
 - Maximum 5 bullet points
 - Up to 3 trailing `Article URL:` citation lines
 
-> **Screenshot:** Replace this line with a terminal screenshot of `check_store.py` output showing OptiBot answering with properly formatted `Article URL:` citations.
+> **Screenshot:** ![Citation](image.png)

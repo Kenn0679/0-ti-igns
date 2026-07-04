@@ -1,25 +1,21 @@
 import logging
-import re
 
 from google.genai import types
 
-from src.config import MARKDOWN_SOURCE_DIR
+from src.store_manager import ARTICLE_URL_METADATA_KEY
 
 logger = logging.getLogger(__name__)
 
-ARTICLE_URL_PATTERN = re.compile(r"^Article URL:\s*(\S+)", re.MULTILINE)
 MAX_CITATIONS = 3
 
 
-def _find_article_url(file_name: str) -> str | None:
-    candidate = MARKDOWN_SOURCE_DIR / file_name
-    if not candidate.exists():
-        logger.warning("Cited source file not found locally: %s", candidate)
-        return None
+def _find_article_url(retrieved_context: types.GroundingChunkRetrievedContext) -> str | None:
+    for entry in retrieved_context.custom_metadata or []:
+        if entry.key == ARTICLE_URL_METADATA_KEY:
+            return entry.string_value
 
-    content = candidate.read_text(encoding="utf-8")
-    match = ARTICLE_URL_PATTERN.search(content)
-    return match.group(1) if match else None
+    logger.warning("No Article URL metadata on cited source: %s", retrieved_context.title)
+    return None
 
 
 def format_response_with_citations(response: types.GenerateContentResponse) -> str:
@@ -40,7 +36,7 @@ def format_response_with_citations(response: types.GenerateContentResponse) -> s
         if retrieved_context is None or not retrieved_context.title:
             continue
 
-        article_url = _find_article_url(retrieved_context.title)
+        article_url = _find_article_url(retrieved_context)
         if article_url and article_url not in article_urls:
             article_urls.append(article_url)
 

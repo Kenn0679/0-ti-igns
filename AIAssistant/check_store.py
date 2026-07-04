@@ -11,7 +11,7 @@ from src.store_manager import (
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
 
-SANITY_CHECK_QUESTION = "How do I add a YouTube video?"
+SANITY_CHECK_QUESTION = "Handle OAuth Authentication using API Gateway Pre-request Configuration"
 
 
 def run_sanity_check(store_name: str) -> None:

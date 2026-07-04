@@ -1,4 +1,5 @@
 import logging
+import re
 import time
 from dataclasses import dataclass
 from pathlib import Path
@@ -14,6 +15,16 @@ logger = logging.getLogger(__name__)
 POLL_INTERVAL_SECONDS = 3
 MAX_UPLOAD_ATTEMPTS = 3
 UPLOAD_RETRY_DELAY_SECONDS = 5
+
+ARTICLE_URL_PATTERN = re.compile(r"^original_url:\s*(\S+)", re.MULTILINE)
+ARTICLE_URL_METADATA_KEY = "article_url"
+
+
+def _extract_article_url(file_path: Path) -> str | None:
+    content = file_path.read_text(encoding="utf-8")
+    match = ARTICLE_URL_PATTERN.search(content)
+    return match.group(1) if match else None
+
 
 # Left as None so the File Search Store's built-in default chunking is used.
 # Pass a types.ChunkingConfig here to override chunk size / overlap explicitly.
@@ -62,6 +73,15 @@ def upload_document(store_name: str, file_path: Path) -> str:
     """Uploads a single file and returns the resource name of the created Document."""
     last_error: Exception | None = None
 
+    article_url = _extract_article_url(file_path)
+    custom_metadata = (
+        [types.CustomMetadata(key=ARTICLE_URL_METADATA_KEY, string_value=article_url)]
+        if article_url
+        else None
+    )
+    if article_url is None:
+        logger.warning("No Article URL found in %s; citation will have no link", file_path.name)
+
     for attempt in range(1, MAX_UPLOAD_ATTEMPTS + 1):
         try:
             operation = client.file_search_stores.upload_to_file_search_store(
@@ -71,6 +91,7 @@ def upload_document(store_name: str, file_path: Path) -> str:
                     display_name=file_path.name,
                     mime_type="text/markdown",
                     chunking_config=CHUNKING_CONFIG,
+                    custom_metadata=custom_metadata,
                 ),
             )
 
@@ -112,7 +133,10 @@ def delete_documents(document_names: list[str]) -> tuple[int, int]:
 
     for document_name in document_names:
         try:
-            client.file_search_stores.documents.delete(name=document_name)
+            client.file_search_stores.documents.delete(
+                name=document_name,
+                config=types.DeleteDocumentConfig(force=True),
+            )
             logger.info("Deleted stale document: %s", document_name)
             succeeded += 1
         except APIError as error:
