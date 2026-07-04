@@ -17,9 +17,9 @@ const normalizedApiPath = zendeskApi.startsWith("/") ? zendeskApi : `/${zendeskA
 
 export const getArticles = async (): Promise<Article[]> => {
     const articles: Article[] = [];
+    //this part I only ran 1 time to get the articles, but I can make it loop through all pages if needed
     let url: string | null = `${normalizedBaseUrl}${normalizedApiPath}`;
 
-    while (url) {
         const response = await axios.get<ZendeskApiResponse>(url);
         const data = response.data as ZendeskApiResponse;
 
@@ -27,8 +27,6 @@ export const getArticles = async (): Promise<Article[]> => {
             articles.push(...data.articles);
         }
 
-        url = data?.next_page ?? null;
-    }
 
     return articles;
 };
