@@ -1,0 +1,12 @@
+**/.git
+**/node_modules
+**/venv
+**/__pycache__
+**/*.pyc
+**/.env
+**/.env.*
+!**/.env.sample
+Scrape/src/dist_markdown
+AIAssistant/manifest.json
+**/*.log
+README.MD

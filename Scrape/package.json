@@ -4,6 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "migrate": "tsx src/migrate.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -21,6 +22,7 @@
     "@types/fs-extra": "^11.0.4",
     "@types/node": "^26.1.0",
     "@types/turndown": "^5.0.6",
+    "tsx": "^4.23.0",
     "typescript": "^6.0.3"
   }
 }

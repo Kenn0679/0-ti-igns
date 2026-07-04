@@ -174,3 +174,7 @@ poetry.toml
 pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
+
+# Delta-detection state (local runs only; production points MANIFEST_PATH at a mounted volume)
+manifest.json
+*.tmp

@@ -16,9 +16,19 @@ const normalizedBaseUrl = (baseUrl.startsWith("http") ? baseUrl : `https://${bas
 const normalizedApiPath = zendeskApi.startsWith("/") ? zendeskApi : `/${zendeskApi}`;
 
 export const getArticles = async (): Promise<Article[]> => {
-    const url = `${normalizedBaseUrl}${normalizedApiPath}`;
-    const response = await axios.get<ZendeskApiResponse>(url);
-    const data = response.data as ZendeskApiResponse;
+    const articles: Article[] = [];
+    let url: string | null = `${normalizedBaseUrl}${normalizedApiPath}`;
 
-    return data && Array.isArray(data.articles) ? data.articles : [];
+    while (url) {
+        const response = await axios.get<ZendeskApiResponse>(url);
+        const data = response.data as ZendeskApiResponse;
+
+        if (data && Array.isArray(data.articles)) {
+            articles.push(...data.articles);
+        }
+
+        url = data?.next_page ?? null;
+    }
+
+    return articles;
 };

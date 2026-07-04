@@ -54,52 +54,12 @@ def get_or_create_file_search_store(display_name: str = FILE_SEARCH_STORE_NAME) 
     return create_file_search_store(display_name)
 
 
-def get_uploaded_display_names(store_name: str) -> set[str]:
-    uploaded: set[str] = set()
-
-    try:
-        for document in client.file_search_stores.documents.list(parent=store_name):
-            if document.state == types.DocumentState.STATE_FAILED:
-                continue
-            if document.display_name:
-                uploaded.add(document.display_name)
-    except APIError as error:
-        raise RuntimeError(f"Failed to list documents for store {store_name}: {error}") from error
-
-    return uploaded
-
-
 def find_markdown_files(source_dir: Path = MARKDOWN_SOURCE_DIR) -> list[Path]:
     return sorted(source_dir.glob("*.md"))
 
 
-def upload_markdown_files(store_name: str, source_dir: Path = MARKDOWN_SOURCE_DIR) -> None:
-    markdown_files = find_markdown_files(source_dir)
-
-    if not markdown_files:
-        raise FileNotFoundError(f"No markdown files found in {source_dir}")
-
-    already_uploaded = get_uploaded_display_names(store_name)
-    pending_files = [f for f in markdown_files if f.name not in already_uploaded]
-    skipped_count = len(markdown_files) - len(pending_files)
-
-    if skipped_count:
-        logger.info("Skipping %d file(s) already present in store %s", skipped_count, store_name)
-
-    failed_files: list[str] = []
-
-    for file_path in pending_files:
-        try:
-            _upload_single_file(store_name, file_path)
-        except RuntimeError as error:
-            logger.error("Giving up on %s, continuing with remaining files: %s", file_path.name, error)
-            failed_files.append(file_path.name)
-
-    if failed_files:
-        logger.warning("Finished with %d file(s) failed: %s", len(failed_files), ", ".join(failed_files))
-
-
-def _upload_single_file(store_name: str, file_path: Path) -> None:
+def upload_document(store_name: str, file_path: Path) -> str:
+    """Uploads a single file and returns the resource name of the created Document."""
     last_error: Exception | None = None
 
     for attempt in range(1, MAX_UPLOAD_ATTEMPTS + 1):
@@ -121,8 +81,12 @@ def _upload_single_file(store_name: str, file_path: Path) -> None:
             if operation.error:
                 raise RuntimeError(f"Upload operation failed for {file_path.name}: {operation.error}")
 
-            logger.info("Uploaded and indexed: %s", file_path.name)
-            return
+            document_name = operation.response.document_name if operation.response else None
+            if not document_name:
+                raise RuntimeError(f"Upload operation for {file_path.name} completed without a document name")
+
+            logger.info("Uploaded and indexed: %s (document=%s)", file_path.name, document_name)
+            return document_name
 
         except APIError as error:
             last_error = error
@@ -139,6 +103,23 @@ def _upload_single_file(store_name: str, file_path: Path) -> None:
     raise RuntimeError(
         f"Failed to upload {file_path.name} to store {store_name} after {MAX_UPLOAD_ATTEMPTS} attempts: {last_error}"
     ) from last_error
+
+
+def delete_documents(document_names: list[str]) -> tuple[int, int]:
+    """Deletes stale Documents from the store. Returns (succeeded, failed) counts."""
+    succeeded = 0
+    failed = 0
+
+    for document_name in document_names:
+        try:
+            client.file_search_stores.documents.delete(name=document_name)
+            logger.info("Deleted stale document: %s", document_name)
+            succeeded += 1
+        except APIError as error:
+            logger.error("Failed to delete document %s: %s", document_name, error)
+            failed += 1
+
+    return succeeded, failed
 
 
 def get_file_search_store_metrics(store_name: str) -> FileSearchStoreMetrics:
