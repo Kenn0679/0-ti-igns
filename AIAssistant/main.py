@@ -1,6 +1,7 @@
 import logging
 import sys
 
+from check_store import check_store
 from src.config import MANIFEST_PATH, MARKDOWN_SOURCE_DIR, RUN_SCRAPER
 from src.delta import ManifestEntry, compute_delta, load_manifest, save_manifest, utc_now_iso
 from src.scraper_runner import clean_markdown_output, run_scraper
@@ -10,6 +11,9 @@ from src.store_manager import (
     get_or_create_file_search_store,
     upload_document,
 )
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -89,6 +93,8 @@ def run_pipeline() -> bool:
         logger.warning("- Failed to upload: %d (%s)", len(failed_uploads), ", ".join(failed_uploads))
     if deleted_failed:
         logger.warning("- Failed to delete stale documents: %d", deleted_failed)
+
+    check_store(store_name)
 
     return not failed_uploads and not deleted_failed
 

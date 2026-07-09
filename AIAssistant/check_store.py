@@ -1,4 +1,5 @@
 import logging
+import sys
 
 from src.assistant import ask
 from src.citations import format_response_with_citations
@@ -7,6 +8,9 @@ from src.store_manager import (
     get_or_create_file_search_store,
     log_file_search_store_metrics,
 )
+
+sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+sys.stderr.reconfigure(encoding="utf-8", errors="replace")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger(__name__)
@@ -31,6 +35,7 @@ def check_store(store_name: str) -> None:
     logger.info("Execution summary")
     logger.info("  File search store: %s", store_name)
     logger.info("  Total files embedded: %d", metrics.active_documents)
+    
 
 
 def main() -> None:
