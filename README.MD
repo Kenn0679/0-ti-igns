@@ -80,7 +80,7 @@ $env:RUN_SCRAPER="false"; python main.py
 Deployed as a Docker container (Python 3.12-slim + Node.js 20 + pnpm 10.33.0) on Railway. The daily automated job runs `python main.py` on a cron schedule.
 
 **Last run artifacts / job logs:**
-<https://railway.com/project/a7f0b5b7-2680-440e-99d4-be0f1784c4fe/service/62e84058-e0f2-4ffc-ada0-b5ee5b2b8376?environmentId=463967e5-4615-43dc-8412-44cd694fa069&id=b282b72b-4eca-438b-b94d-92f859b8bcd9#build>
+<https://railway.com/project/a7f0b5b7-2680-440e-99d4-be0f1784c4fe/service/62e84058-e0f2-4ffc-ada0-b5ee5b2b8376?environmentId=463967e5-4615-43dc-8412-44cd694fa069&id=b282b72b-4eca-438b-b94d-92f859b8bcd9#deploy>
 
 > Override `MANIFEST_PATH` to a mounted volume (e.g. `/data/manifest.json`) so incremental state persists across ephemeral job runs.
 
